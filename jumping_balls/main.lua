@@ -38,8 +38,8 @@ local palette =
 local color_lookup = { }
 
 
-local circle_mode = true
-local balls_mode  = false
+local circle_mode = false
+local balls_mode  = true
 local balls ={}
 
 local dark =
@@ -197,6 +197,11 @@ function bounce(p_ball)
   
   p_ball.dest =get_destination(p_ball)
   
+
+  
+  --you know the actual bouncing point
+    
+    
 end
 
 function create_lookup()
@@ -220,9 +225,6 @@ end
 function love.load()
   --require ("mobdebug").start()
   -- initialise some circle objects
-  
-  love.mouse.setVisible(false)
-  
   for i=1 ,num_of_circles do
     circles[i] = create_circle()
   end
@@ -290,7 +292,7 @@ end
 
 
 function love.update(dt)
---print(dt)
+print(dt)
 if dt > 0.5 then
   return
 end
@@ -313,7 +315,7 @@ end
      if dist(ball,ball.dest) <10 then
         bounce(ball)
         ball.time = 0
-       -- print("Bounce "..i)
+        print("Bounce")
      end
      if i == 1 then
     -- print("Ball "..i.." dist: "..dist(ball,ball.dest))
@@ -356,7 +358,7 @@ function love.draw()
   elseif balls_mode then
     color(col-1)
     for i,ball in ipairs(balls) do
-      love.graphics.circle("fill",ball.x,ball.y,10,100)
+      love.graphics.circle("fill",ball.x,ball.y,8,100)
     end
   
     
@@ -366,7 +368,8 @@ function love.draw()
     color(col-1)
     love.graphics.circle("fill",mx,my,10,10)
     
-
+    love.graphics.circle("fill",mx+50,my,10,10)
+    love.graphics.circle("fill",mx-50,my,10,10)
   end
 
   --also draw a color like the background on the bottom ...

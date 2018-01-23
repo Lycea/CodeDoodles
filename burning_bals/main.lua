@@ -1,6 +1,6 @@
 local screen_width, screen_height = love.graphics.getWidth(),love.graphics.getHeight()
 local circles = {}
-local num_of_circles = 20
+local num_of_circles = 15
 
 love.graphics.setLineStyle('rough')
 local canvas = love.graphics.newCanvas(screen_width, screen_height)
@@ -38,9 +38,9 @@ local palette =
 local color_lookup = { }
 
 
-local circle_mode = true
-local balls_mode  = false
-local balls ={}
+local circle_mode = false
+local balls_mode  = true
+
 
 local dark =
 {
@@ -101,9 +101,6 @@ vec4 effect( vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords 
     return c;
 }
 ]]
-
-local function lerp_(x,y,t) local num = x+t*(y-x)return num end
-
 local function lerp_point(x1,y1,x2,y2,t)
   local x = lerp_(x1,x2,t)
   local y = lerp_(y1,y2,t)
@@ -129,76 +126,6 @@ function create_circle()
 end
 
 
-
-function get_destination(ball_)
-  local found_point = false
-  local dest = {}
-  local idest 
-  repeat
-    repeat
-     idest = math.random(1,4)
-    until idest ~= ball_.dest.side
-      
-    --top
-    if idest == 1 then
-      dest.y = 0
-      dest.x = math.random(0,screen_width)
-      
-    --right
-    elseif idest == 2 then
-      dest.y = math.random(0,screen_height)
-      dest.x = screen_width
-    --bot
-    elseif idest == 3 then
-      dest.y = screen_height
-      dest.x = math.random(0,screen_width)
-    --left
-    elseif idest ==4 then
-      dest.y = math.random(0,screen_height)
-      dest.x = 0
-    end
-    dest.side = idest
-   found_point = true
-  until found_point == true
-  return dest
-end
-
-
-function create_ball()
-  local tmp =       
-  {
-    start ={
-      x = math.random(5,screen_width-5),
-      y= math.random(5,screen_height-5)
-      },
-      color = 10--math.random(8,#palette-2)
-   }
-   
-   if tmp.start.x > screen_width/2 then
-     tmp.dest = {}
-     tmp.dest.x = math.random(10,screen_width)
-     tmp.dest.y = 0
-     
-     tmp.dest.side = 1
-   else
-     tmp.dest = {}
-     tmp.dest.x = math.random(screen_width/2+1,screen_width)
-     tmp.dest.y = screen_height
-     tmp.dest.side = 3
-   end
-    tmp.time = 0
-  return tmp
-end
-
-
-function bounce(p_ball)
-  p_ball.start.x = p_ball.x
-  p_ball.start.y = p_ball.y
-  
-  p_ball.dest =get_destination(p_ball)
-  
-end
-
 function create_lookup()
  for key,tab in ipairs(palette) do
    
@@ -220,9 +147,6 @@ end
 function love.load()
   --require ("mobdebug").start()
   -- initialise some circle objects
-  
-  love.mouse.setVisible(false)
-  
   for i=1 ,num_of_circles do
     circles[i] = create_circle()
   end
@@ -232,10 +156,7 @@ function love.load()
   sh = love.graphics.newShader(alpha_mod)
   
   
-  for i=1,num_of_circles do
-    balls[i] = create_ball()
-  end
-  
+  balls = circles
 end
 
 
@@ -290,10 +211,6 @@ end
 
 
 function love.update(dt)
---print(dt)
-if dt > 0.5 then
-  return
-end
 
   --update the circles
   if circle_mode then
@@ -307,20 +224,8 @@ end
         end
     end
   elseif balls_mode then
-  
     for i,ball in ipairs(balls) do
-     ball.x,ball.y= lerp_point(ball.start.x,ball.start.y,ball.dest.x,ball.dest.y,ball.time)
-     if dist(ball,ball.dest) <10 then
-        bounce(ball)
-        ball.time = 0
-       -- print("Bounce "..i)
-     end
-     if i == 1 then
-    -- print("Ball "..i.." dist: "..dist(ball,ball.dest))
-    end
-   
-     ball.time = ball.time +dt/2
-     
+      
     end
     
   else
@@ -328,9 +233,6 @@ end
   end
   
 end
-
-
-
 
 function love.draw()
   --love.graphics.setCanvas(canvas)
@@ -356,7 +258,7 @@ function love.draw()
   elseif balls_mode then
     color(col-1)
     for i,ball in ipairs(balls) do
-      love.graphics.circle("fill",ball.x,ball.y,10,100)
+      love.graphics.circle("fill",ball.x,ball.y,8,100)
     end
   
     
@@ -366,7 +268,8 @@ function love.draw()
     color(col-1)
     love.graphics.circle("fill",mx,my,10,10)
     
-
+    love.graphics.circle("fill",mx+50,my,10,10)
+    love.graphics.circle("fill",mx-50,my,10,10)
   end
 
   --also draw a color like the background on the bottom ...
@@ -381,4 +284,3 @@ function love.draw()
   --print(love.timer.getFPS())
 end
 
-  
