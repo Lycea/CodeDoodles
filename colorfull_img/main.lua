@@ -3,8 +3,7 @@ local circles = {}
 local num_of_circles = 15
 
 love.graphics.setLineStyle('rough')
-local canv = love.graphics.newCanvas(1024, 1024)
-canv:setFilter('nearest','nearest')
+
 
 
 function Clamp(val, lower, upper)
@@ -180,38 +179,68 @@ function color(i)
   love.graphics.setColor(palette[i+1])
 end
 col = 11
+
+
+
+function bitand(a, b)
+    local result = 0
+    local bitval = 1
+    while a > 0 and b > 0 do
+      if a % 2 == 1 and b % 2 == 1 then -- test the rightmost bits
+          result = result + bitval      -- set the current bit
+      end
+      bitval = bitval * 2 -- shift left
+      a = math.floor(a/2) -- shift right
+      b = math.floor(b/2)
+    end
+    return result
+end
+
+
 local time_old = 0
 function dark_col(i)
     love.graphics.setColor(palette[dark[i]])
 end
 
 
-
+max = 500
+multi = 255
 function r(i,j)
-  return dist({x=i,y=j},{x=0,y=0})/4
+  --return i*j%multi
+  return i*j%dist({x=0,y=0},{x=i,y=j})
+  --return dist({x=i,y=j},{x=max/2,y=max/2})+math.sin(i/j)*multi
 end
 
 
 function g(i,j)
-  return 0+(i+j)
+  --return i*j%multi
+  return i*j%dist({x=max/2,y=max/2},{x=i,y=j})
+  --return dist({x=i,y=j},{x=max/2,y=max/2})+math.cos(i/j)*multi
 end
 
 
 function b(i,j)
-  return 0
+  --return i*j%multi
+  return i*j%dist({x=max,y=max},{x=i,y=j})
+  --return dist({x=i,y=j},{x=max/2,y=max/2})+math.tan(i/j)*multi
 end
 
 
 count = 0
 
 
+local canv = love.graphics.newCanvas(max, max)
+canv:setFilter('nearest','nearest')
+
+
 function love.update(dt)
   
-  if count == 0 then
+  --if count == 0 then
+    img = nil
     img = {}
     
-    for ro = 1,1024 do
-      for co = 1,1024 do
+    for ro = 1,max do
+      for co = 1,max do
         img[#img+1] = {
           re=r(ro,co),
           gr=g(ro,co),
@@ -220,29 +249,169 @@ function love.update(dt)
         
       end
     end
-  end
-  
+    count = count +1
+  --end
+ -- multi = multi + 1
+ imgui.NewFrame()
 end
+
+
+--arguments shader 3
+x_1,x_2 = 10,10
+y_1,y_2 = 10,10
+
+--arguments shader 4:p
+point_r = {0,0}
+point_g = {0.5,0.5}
+point_b = {1.0,1.0}
+
+shdr_idx = 3
+local shaders={}
+
 
 function love.draw()
   --BEGIN_DRAW()
   
+  
   love.graphics.setCanvas(canv)
-    for ro = 1,1024 do
-      for c = 1,1024 do
-        love.graphics.setColor(img[ro*c].re,img[ro*c].gr,img[ro*c].bl,255)
-        love.graphics.points(ro,c)
-      end
-    end
+    love.graphics.rectangle("fill",0,0,max,max)
   love.graphics.setCanvas()
   
-  love.graphics.draw(canv,0,0)
+  --love.graphics.draw(canv,0,0)
+  imgui.Begin("debug_",true)
+  
+  s,shdr_idx = imgui.SliderInt("selected Shader",shdr_idx,1,#shaders)
+  
+  imgui.Separator()
+  if shdr_idx == 2 then
+     s,x_1,x_2 = imgui.SliderFloat2("multi_x",x_1,x_2,0,200)
+     s,y_1,y_2 = imgui.SliderFloat2("multi_y",y_1,y_2,0,200)
+     
+    shaders[shdr_idx]:send("multi_x",x_1,y_2,0)
+    shaders[shdr_idx]:send("multi_y",y_1,y_2,0)
+    
+    
+   elseif shdr_idx == 4 then
+     
+     s,point_r[1],point_r[2] = imgui.SliderFloat2("pointr",point_r[1],point_r[2],0,1)
+     s,point_g[1],point_g[2] = imgui.SliderFloat2("pointg",point_g[1],point_g[2],0,1)
+     s,point_b[1],point_b[2] = imgui.SliderFloat2("pointb",point_b[1],point_b[2],0,1)
+     
+    shaders[shdr_idx]:send("pointr",point_r)
+    shaders[shdr_idx]:send("pointg",point_g)
+    shaders[shdr_idx]:send("pointb",point_b)
+   end
+   
+  imgui.End()
+
+  --use the shader
+  love.graphics.setShader(shaders[shdr_idx])
+    love.graphics.draw(canv)
+  love.graphics.setShader()
+  
+  imgui.Render()
   --END_DRAW()
 end
 
 
 
 function love.load()
+  imgui = require("imgui")
     --require("mobdebug").start()
+     
+     shaders_code =
+     {
+         --lines_verti/hori =
+         [[
+          vec4 effect( vec4 color, Image texture, vec2 coo, vec2 screen_coords )
+          {
+            float r = sin(coo.x/2*100);//coo.x;
+            float g = sin(coo.y/2*100);    //coo.y;
+            float b = sin((coo.x+coo.y)/2*100);
+            
+            return vec4(r,g,b,1)*color;
+          }
+        ]]
+      ,
+      -- lines_color=
+     [[
+         uniform float multi_x[2];
+         uniform float multi_y[2];
+         
+         
+        vec4 effect( vec4 color, Image texture, vec2 coo, vec2 screen_coords )
+        {
+          float r = pow(coo.x,coo.y);//coo.x;
+          float g = mod(coo.y*multi_y[0],coo.x*multi_x[0]);    //coo.y;
+          float b = mod(coo.x*multi_x[1],coo.y*multi_y[1]);
+          
+          return vec4(r,g,b,1);
+        }
+      ]]
+      ,
+      [[  
+        vec4 effect( vec4 color, Image texture, vec2 coo, vec2 screen_coords )
+        {
+          
+          float r = (coo.x*coo.y)*10;
+          float g = coo.y*2;
+          float b = coo.x*2;
+          
+          return vec4(r,g,b,1);
+        }
+      ]]
+      ,
+      [[  
+        uniform vec2  pointr;
+        uniform vec2  pointg;
+        uniform vec2  pointb;
+        
+        vec4 effect( vec4 color, Image texture, vec2 coo, vec2 screen_coords )
+        {
+          float r = mod(coo.x*coo.y,distance(pointr,vec2(coo.x,coo.y)) ) ;      //return i*j%dist({x=0,y=0},{x=i,y=j})
+          float g = mod(coo.x*coo.y,distance(pointg,vec2(coo.x,coo.y))*coo.x);  //i*j%dist({x=max/2,y=max/2},{x=i,y=j})
+          float b = mod(coo.x*coo.y,distance(pointb,vec2(coo.x,coo.y))*0) ;     //i*j%dist({x=max,y=max},{x=i,y=j})
+          
+          return vec4(r,g,b,1) ;
+        }
+      ]]
+      }
+  
+  
+  for i,shader in ipairs( shaders_code) do
+    shaders[i]=love.graphics.newShader(shader)
+    print(i.." Loaded successfull")
+  end
+  
+end
+
+
+
+function love.mousemoved(x, y)
+    imgui.MouseMoved(x, y)
+    if not imgui.GetWantCaptureMouse() then
+        -- Pass event to the game
+    end
+end
+
+function love.mousepressed(x, y, button)
+    imgui.MousePressed(button)
+    if not imgui.GetWantCaptureMouse() then
+        -- Pass event to the game
+    end
+end
+
+function love.mousereleased(x, y, button)
+    imgui.MouseReleased(button)
+    if not imgui.GetWantCaptureMouse() then
+        -- Pass event to the game
+    end
+end
+
+function love.wheelmoved(x, y)
+    imgui.WheelMoved(y)
+    if not imgui.GetWantCaptureMouse() then
+        -- Pass event to the game
+    end
 end
 
