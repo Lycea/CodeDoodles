@@ -239,16 +239,7 @@ function love.update(dt)
     img = nil
     img = {}
     
-    for ro = 1,max do
-      for co = 1,max do
-        img[#img+1] = {
-          re=r(ro,co),
-          gr=g(ro,co),
-          bl=b(ro,co)
-          }
-        
-      end
-    end
+
     count = count +1
   --end
  -- multi = multi + 1
@@ -265,59 +256,23 @@ point_r = {0,0}
 point_g = {0.5,0.5}
 point_b = {1.0,1.0}
 
+txt_fi = ""
+
+
 shdr_idx = 3
 local shaders={}
 
 
-function love.draw()
-  --BEGIN_DRAW()
-  
-  
-  love.graphics.setCanvas(canv)
-    love.graphics.rectangle("fill",0,0,max,max)
-  love.graphics.setCanvas()
-  
-  --love.graphics.draw(canv,0,0)
-  imgui.Begin("debug_",true)
-  
-  s,shdr_idx = imgui.SliderInt("selected Shader",shdr_idx,1,#shaders)
-  
-  imgui.Separator()
-  if shdr_idx == 2 then
-     s,x_1,x_2 = imgui.SliderFloat2("multi_x",x_1,x_2,0,200)
-     s,y_1,y_2 = imgui.SliderFloat2("multi_y",y_1,y_2,0,200)
-     
-    shaders[shdr_idx]:send("multi_x",x_1,y_2,0)
-    shaders[shdr_idx]:send("multi_y",y_1,y_2,0)
-    
-    
-   elseif shdr_idx == 4 then
-     
-     s,point_r[1],point_r[2] = imgui.SliderFloat2("pointr",point_r[1],point_r[2],0,1)
-     s,point_g[1],point_g[2] = imgui.SliderFloat2("pointg",point_g[1],point_g[2],0,1)
-     s,point_b[1],point_b[2] = imgui.SliderFloat2("pointb",point_b[1],point_b[2],0,1)
-     
-    shaders[shdr_idx]:send("pointr",point_r)
-    shaders[shdr_idx]:send("pointg",point_g)
-    shaders[shdr_idx]:send("pointb",point_b)
-   end
-   
-  imgui.End()
 
-  --use the shader
-  love.graphics.setShader(shaders[shdr_idx])
-    love.graphics.draw(canv)
-  love.graphics.setShader()
-  
-  imgui.Render()
-  --END_DRAW()
-end
-
-
+local line_buff = {}
+line_buff[1]=""
+local LINE_BUFF_MAX = 70
+local actual_line = 1
+local actual_pos = 1
 
 function love.load()
   imgui = require("imgui")
-    --require("mobdebug").start()
+    require("mobdebug").start()
      
      shaders_code =
      {
@@ -368,9 +323,9 @@ function love.load()
         
         vec4 effect( vec4 color, Image texture, vec2 coo, vec2 screen_coords )
         {
-          float r = mod(coo.x*coo.y,distance(pointr,vec2(coo.x,coo.y)) ) ;      //return i*j%dist({x=0,y=0},{x=i,y=j})
-          float g = mod(coo.x*coo.y,distance(pointg,vec2(coo.x,coo.y))*coo.x);  //i*j%dist({x=max/2,y=max/2},{x=i,y=j})
-          float b = mod(coo.x*coo.y,distance(pointb,vec2(coo.x,coo.y))*0) ;     //i*j%dist({x=max,y=max},{x=i,y=j})
+          float r = mod(coo.x*coo.y,distance(pointr ,vec2(coo.x,coo.y)) ) ;      //return i*j%dist({x=0,y=0},{x=i,y=j})
+          float g = mod(coo.x*coo.y,distance(pointg ,vec2(coo.x,coo.y))*coo.x);  //i*j%dist({x=max/2,y=max/2},{x=i,y=j})
+          float b = mod(coo.x*coo.y,distance(pointb ,vec2(coo.x,coo.y))*0) ;     //i*j%dist({x=max,y=max},{x=i,y=j})
           
           return vec4(r,g,b,1) ;
         }
@@ -383,7 +338,107 @@ function love.load()
     print(i.." Loaded successfull")
   end
   
+    t=getfenv()
+   for k,v in pairs(t) do
+    --print(i)
+    if "function" ~= type(v) then
+      print(k.." is a "..type(v))
+      if "table" ~=type(v) then
+        print(k.." = "..v)
+      end
+    end
+    
+   end
+ 
+  t.count = 10
+  
+  setfenv(0,t)
+  
+  
+  start =love.timer.getTime()
+  s = getfenv()
+  stop = love.timer.getTime()
+  
+  print(stop-start)
+  
+  
+  print(s.count)
+  
+  fo = love.graphics.getFont()
+  fo_hi = fo:getHeight()
+  
+  
+  
+
+  
+  
+  
 end
+
+
+function love.draw()
+  --BEGIN_DRAW()
+
+  
+  
+  love.graphics.setCanvas(canv)
+    love.graphics.rectangle("fill",0,0,max,max)
+  love.graphics.setCanvas()
+  
+  --love.graphics.draw(canv,0,0)
+  imgui.Begin("debug_",true)
+  
+  s,shdr_idx = imgui.SliderInt("selected Shader",shdr_idx,1,#shaders)
+  
+  imgui.Separator()
+  if shdr_idx == 2 then
+     s,x_1,x_2 = imgui.SliderFloat2("multi_x",x_1,x_2,0,200)
+     s,y_1,y_2 = imgui.SliderFloat2("multi_y",y_1,y_2,0,200)
+     
+    shaders[shdr_idx]:send("multi_x",x_1,y_2,0)
+    shaders[shdr_idx]:send("multi_y",y_1,y_2,0)
+    
+    
+   elseif shdr_idx == 4 then
+     
+     s,point_r[1],point_r[2] = imgui.SliderFloat2("pointr",point_r[1],point_r[2],0,1)
+     s,point_g[1],point_g[2] = imgui.SliderFloat2("pointg",point_g[1],point_g[2],0,1)
+     s,point_b[1],point_b[2] = imgui.SliderFloat2("pointb",point_b[1],point_b[2],0,1)
+     
+    shaders[shdr_idx]:send("pointr",point_r)
+    shaders[shdr_idx]:send("pointg",point_g)
+    shaders[shdr_idx]:send("pointb",point_b)
+   end
+  imgui.End()
+
+  --use the shader
+  love.graphics.setShader(shaders[shdr_idx])
+    love.graphics.draw(canv)
+  love.graphics.setShader()
+  
+  imgui.Render()
+  
+  local text =""
+  for i=1 ,#line_buff do
+   text = text ..line_buff[i].."\n"
+  end
+  love.graphics.print(text,0,0)
+  
+  
+  --calculate the actual position and put a line there as cursor :P
+  local cur_y = fo_hi*actual_line
+  local cur_x = fo:getWidth(line_buff[actual_line]:sub(1,actual_pos+1))
+    
+    love.graphics.line(cur_x,cur_y,cur_x,cur_y-fo_hi)
+  
+  
+  
+  --END_DRAW()
+end
+
+
+
+
 
 
 
@@ -413,5 +468,108 @@ function love.wheelmoved(x, y)
     if not imgui.GetWantCaptureMouse() then
         -- Pass event to the game
     end
+end
+
+local shift_used = false
+
+
+
+
+
+function add_key(key)
+  if  #line_buff[actual_line] == LINE_BUFF_MAX then
+    table.insert(line_buff,actual_line+1,"")
+    line_buff[actual_line+1] = ""
+    actual_line = actual_line+1
+  end
+  line_buff[actual_line] =line_buff[actual_line]..key
+  actual_pos = actual_pos+1
+end
+
+function remove_key()
+  if #line_buff[actual_line] > 0 then
+    line_buff[actual_line] = line_buff[actual_line]:sub(1,#line_buff[actual_line]-1)
+  else
+    if actual_line >1 then
+      table.remove(line_buff,actual_line)
+      actual_line = actual_line -1
+      actual_pos = #line_buff[actual_line]
+    end
+  
+  end
+  
+end
+
+
+function love.keypressed(key,code,rep_)
+  --print(key.." "..code)
+  if key == "return" then
+    table.insert(line_buff,actual_line+1,"")
+    line_buff[actual_line+1] = ""
+    actual_line = actual_line+1
+  elseif key == "backspace" then
+    remove_key()
+--  elseif key == "space" then
+--   add_key(" ")
+  elseif key == "left" then
+    if actual_pos ~= 1 then
+       actual_pos = actual_pos -1
+       print(actual_pos)
+    end
+
+  elseif key == "right" then
+    if actual_pos ~= #line_buff[actual_line] and actual_pos ~= LINE_BUFF_MAX then
+       actual_pos = actual_pos+1
+    end
+    
+  elseif key == "up" then
+  actual_line = (actual_line>1) and actual_line-1 or actual_line
+  
+  elseif key == "down" then
+  actual_line = (#line_buff>actual_line) and actual_line+1 or actual_line
+  
+  
+  
+--  elseif key:match(".*shift.*") then
+--    shift_used = true
+--  else
+--    if shift_used then
+--      if key:match("%d")then
+--        print("I'm a number")
+--      elseif key:match("%a") and #key == 1 then 
+--        print("I'm a letter")
+--        add_key( string.upper(key))
+--      else
+--        print("I'm something else "..#key)
+--      end
+--    else
+--      if key:match("%d")then
+--         print("I'm a number")
+--         add_key(key)
+--      elseif key:match("%a") and #key == 1 then 
+--        print("I'm a letter")
+--        add_key(key)
+--      else  
+--         print("I'm something else "..#key)
+--      end
+--    end
+  end
+
+  
+
+end
+
+function love.textinput(txt)
+  
+  
+  
+  add_key(txt)
+end
+
+
+function love.keyreleased(key)
+  if key:match(".*shift.*") then
+    shift_used = false
+  end
 end
 
