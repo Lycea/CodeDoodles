@@ -1,13 +1,15 @@
+local burning_balls ={}
+
 local screen_width, screen_height = love.graphics.getWidth(),love.graphics.getHeight()
 local circles = {}
 local num_of_circles = 15
 
-love.graphics.setLineStyle('rough')
+--love.graphics.setLineStyle('rough')
 local canvas = love.graphics.newCanvas(screen_width, screen_height)
-canvas:setFilter('nearest','nearest')
+--canvas:setFilter('nearest','nearest')
 
 
-function Clamp(val, lower, upper)
+local function Clamp(val, lower, upper)
     assert(val and lower and upper, "not very useful error message here")
     if lower > upper then lower, upper = upper, lower end -- swap if boundaries supplied the wrong way
     return math.max(lower, math.min(upper, val))
@@ -114,7 +116,7 @@ local function dist(p1,p2) return ((p2.x-p1.x)^2+(p2.y-p1.y)^2)^0.5 end
 
 
 
-function create_circle()
+local function create_circle()
   local tmp =       
   {
       x = math.random(5,screen_width-1),
@@ -126,7 +128,7 @@ function create_circle()
 end
 
 
-function create_lookup()
+local function create_lookup()
  for key,tab in ipairs(palette) do
    
      if color_lookup[tab[1]] == nil then
@@ -143,8 +145,7 @@ function create_lookup()
 end
 
 
-
-function love.load()
+ function burning_balls.init()
   --require ("mobdebug").start()
   -- initialise some circle objects
   for i=1 ,num_of_circles do
@@ -160,7 +161,7 @@ function love.load()
 end
 
 
-function BEGIN_DRAW()
+local function BEGIN_DRAW()
   love.graphics.setCanvas(canvas)
   love.graphics.setLineWidth(3)
   local data = canvas:newImageData()
@@ -190,7 +191,7 @@ function BEGIN_DRAW()
   love.graphics.setLineWidth(2)
 end
 
-function END_DRAW()
+local function END_DRAW()
   
   love.graphics.setCanvas()
   love.graphics.setColor (255,255,255)
@@ -199,18 +200,18 @@ function END_DRAW()
   love.graphics.draw(canvas,0,0,0,1,1)
 end
 
-function color(i)
+local function color(i)
   love.graphics.setColor(palette[i+1])
 end
 col = 11
 local time_old = 0
-function dark_col(i)
+local function dark_col(i)
     love.graphics.setColor(palette[dark[i]])
 end
 
 
 
-function love.update(dt)
+function burning_balls.update(dt)
 
   --update the circles
   if circle_mode then
@@ -234,7 +235,7 @@ function love.update(dt)
   
 end
 
-function love.draw()
+function burning_balls.draw()
   --love.graphics.setCanvas(canvas)
   BEGIN_DRAW()
   
@@ -284,3 +285,5 @@ function love.draw()
   --print(love.timer.getFPS())
 end
 
+
+return burning_balls

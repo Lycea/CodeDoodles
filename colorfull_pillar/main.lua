@@ -224,9 +224,11 @@ function base_idea()
        --draw the rectangle
        love.graphics.setColor(0xff,0xff,0xff,255)
        love.graphics.rectangle("fill",x1,0,dist({x=x1,y=0},{x=x2,y=0}),127) -- x1 ,0 to x2,127
+
        
        --draw the "lines"
        love.graphics.setColor(0,0,0,255)
+       
        love.graphics.rectangle("line",x1,0,1,127)
        love.graphics.rectangle("line",x2,0,1,127)
      end
@@ -251,45 +253,47 @@ local funky_ =
   1,2,13,14,2,3,15,16,8
 }
 
+local iLines  = 128
+local center = 64
+local width  = 32
+
+
 function twisted_thingy()
   love.graphics.setColor(0xff,0xff,0xff,255)
     
   --get some time since the start
-  local t = (love.timer.getTime()-start_t)*0.25
+  local t = (love.timer.getTime()-start_t)
   --print(a)
   
   --draw line after line
-  for y=0,127 do
-    local yy = y/256--find out what
-   -- local a  = math.cos(turn_to_rad(0.2*math.sin(turn_to_rad(t*0.1+yy*2)))+0.5*math.cos(turn_to_rad(-0.2*t+yy/2)))  --time stuff depending on y , makes things twist :P
-    --local a  = math.cos(turn_to_rad(turn_to_rad(0.2)*math.sin(turn_to_rad(t*0.1+yy*2)))+turn_to_rad(0.5)*math.cos(turn_to_rad(-0.2*t+yy/2)))  --time stuff depending on y , makes things twist :P
-    local a  = yy*t / math.sin(t) --time stuff depending on y , makes things twist :P
+  for y=0,iLines do
+    local yy = y/1024--find out what
+    --local a  = math.cos(turn_to_rad(0.2*math.sin(turn_to_rad(t*0.1+yy*2)))+0.5*math.cos(turn_to_rad(-0.2*t+yy/2)))  --time stuff depending on y , makes things twist :P
+    --local a  = math.cos(turn_to_rad(turn_to_rad(0.1)*math.sin(turn_to_rad(t*0.1+yy*2)))+turn_to_rad(0.5)*math.cos(turn_to_rad(-0.2*t+yy/2)))  --time stuff depending on y , makes things twist :P
+    local a  =  (math.cos(yy) +t +math.sin(yy*20+t)) --yy*t --time stuff depending on y , makes things twist :P
+    
+    local center = 64+16*math.cos(math.sin(turn_to_rad(t*0.1+yy*2)))
+    local width  =32+4*(math.sin(turn_to_rad(-t+y/128))+turn_to_rad(0.5)*math.cos(0.5*t-y/64))
      
     --for each side that 
-     for i = 0,3*(math.pi/2),math.pi/2 do
+     for i = 0,3*(math.pi/2),(math.pi/2) do
        --print(i)
-       local x1 = 64+32*math.cos(a+i)
-       local x2 = 64+32*math.cos(a+i+(math.pi/2))
+       local x1 = center+width*math.cos(a+i)
+       local x2 = center+width*math.cos(a+i+(math.pi/2))
        
        if x1 <x2 then
-
-         local c=(dist({x=x1,y=0},{x=x2,y=0})-1)/(#funky_)
-         print(c)
-         local ca=funky_[Clamp(math.floor(c),1,#funky_)]
-         
-         
-         --col_num =   math.floor(dist({x=x1,y=0},{x=x2,y=0}))%#rainbow +1
-        -- col_num =   math.floor(dist({x=x1,y=0},{x=x2,y=0}))%255 * 5
-         --love.graphics.setColor(palette[rainbow[col_num]])
+          col_num =   math.floor(dist({x=x1,y=0},{x=x2,y=0}))%255 * 5
        
+               
        
-         love.graphics.setColor(palette[ca])
+         love.graphics.setColor(col_num,col_num,col_num)
+         --love.graphics.setColor(palette[ca])
          love.graphics.line(x1,y,x2,y)
          
          
          --draw the "ends"
          --love.graphics.setColor(0xff,0xff,0xff,255)
-         love.graphics.setColor(0,0,0,255)
+         --love.graphics.setColor(0,0,0,255)
          --love.graphics.points(x1,y,x2,y)
          
        end
@@ -308,8 +312,11 @@ function love.draw()
 
    
    
-    twisted_thingy()
+    --twisted_thingy()
+    
+    base_idea()
  
+ love.graphics.setColor(0xff,0xff,0xff,255)
   
   --print(love.timer.getFPS())
   
